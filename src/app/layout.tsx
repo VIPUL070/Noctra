@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
-import { Space_Grotesk, Anton } from "next/font/google";
+import { Space_Grotesk, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ClerkProvider, Show, } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const anton = Anton({
-  weight: "400",
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-anton",
+  weight: ["400", "500", "700"],
+  variable: "--font-dm-sans",
   display: "swap",
 });
 
@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <html
         lang="en"
         suppressHydrationWarning
-        className={cn("antialiased", "font-primary", spaceGrotesk.variable, anton.variable)}
+        className={cn("antialiased", "font-primary", spaceGrotesk.variable, dmSans.variable)}
       >
         <body suppressHydrationWarning>
           <Suspense>
