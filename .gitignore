@@ -48,3 +48,4 @@ coverage/
 
 # Prisma / TypeScript artifacts (if applicable)
 *.tsbuildinfo
+src/generated
