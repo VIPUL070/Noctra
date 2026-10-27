@@ -40,7 +40,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </Suspense>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
