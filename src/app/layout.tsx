@@ -3,8 +3,9 @@ import { Suspense, type ReactNode } from "react";
 import { Space_Grotesk, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { ClerkProvider, Show, } from "@clerk/nextjs";
+import { ClerkProvider, Show } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
+import Providers from "./providers";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -38,12 +39,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Show when="signed-out" />
             <Show when="signed-in" />
           </Suspense>
-          <ThemeProvider
-            attribute="class"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
+          <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
+            <Providers>{children}</Providers>
           </ThemeProvider>
         </body>
       </html>
