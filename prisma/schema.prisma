@@ -1,8 +1,141 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum PRESET {
+  HD
+  SD
+}
+
+enum Type {
+  PERSONAL
+  PUBLIC
+}
+
+enum SUBSCRIPTION_PLAN {
+  FREE
+  PRO
+}
+
+model User {
+  id           String         @id @default(cuid())
+  clerkId      String         @unique
+  firstName    String?
+  lastName     String?
+  email        String         @unique
+  image        String?
+  studio       Media?
+  workSpace    WorkSpace[]
+  videos       Video[]
+  subscription Subscription?
+  notification Notification[]
+  sender       Invite[]       @relation("sender")
+  receiver     Invite[]       @relation("receiver")
+  members      Member[]
+  trial        Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  screen    String?
+  mic       String?
+  camera    String?
+  preset    PRESET   @default(SD)
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Invite {
+  id          String     @id @default(cuid())
+  sender      User?      @relation("sender", fields: [senderId], references: [id])
+  senderId    String?
+  receiver    User?      @relation("receiver", fields: [receiverId], references: [id])
+  receiverId  String?
+  content     String
+  WorkSpace   WorkSpace? @relation(fields: [workSpaceId], references: [id])
+  workSpaceId String?
+  accepted    Boolean    @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Folder {
+  id          String     @id @default(cuid())
+  name        String     @default("Untitled Folder")
+  createdAt   DateTime   @default(now())
+  WorkSpace   WorkSpace? @relation(fields: [workSpaceId], references: [id])
+  workSpaceId String?
+  videos      Video[]
+  updatedAt DateTime  @updatedAt
+}
+
+model Video {
+  id          String     @id @default(cuid())
+  title       String?    @default("Untitled Video")
+  description String?    @default("No Description")
+  source      String     @unique
+  createdAt   DateTime   @default(now())
+  Folder      Folder?    @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  folderId    String?
+  User        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?
+  processing  Boolean    @default(true)
+  WorkSpace   WorkSpace? @relation(fields: [workSpaceId], references: [id], onDelete: Cascade)
+  workSpaceId String?
+  views       Int        @default(0)
+  summary     String?
+  updatedAt DateTime  @updatedAt
+}
+
+model Subscription {
+  id         String            @id @default(cuid())
+  User       User?             @relation(fields: [userId], references: [id])
+  userId     String?           @unique
+  createdAt  DateTime          @default(now())
+  plan       SUBSCRIPTION_PLAN @default(FREE)
+  updatedAt  DateTime          @updatedAt
+  customerId String?           @unique
+}
+
+model Member {
+  id          String     @id @default(cuid())
+  User        User?      @relation(fields: [userId], references: [id])
+  userId      String?
+  member      Boolean    @default(true)
+  WorkSpace   WorkSpace? @relation(fields: [workSpaceId], references: [id])
+  workSpaceId String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Notification {
+  id      String  @id @default(cuid())
+  User    User?   @relation(fields: [userId], references: [id])
+  userId  String?
+  content String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model WorkSpace {
+  id        String    @id @default(cuid())
+  name      String
+  User      User?     @relation(fields: [userId], references: [id])
+  userId    String?
+  type      Type
+  folders   Folder[]
+  videos    Video[]
+  members   Member[]
+  invite    Invite[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
