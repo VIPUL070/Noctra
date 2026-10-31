@@ -49,11 +49,11 @@ export default function SkiperNavbar() {
       <div
         ref={containerRef}
         // full-height column so the menu panel can flex to fill; empty space is click-through
-        className="pointer-events-none flex h-[calc(100dvh-50px)] w-full max-w-[510px] flex-col gap-2.5"
+        className="pointer-events-none flex h-[calc(100dvh-50px)] w-full max-w-[410px] flex-col gap-2.5"
       >
         {/* 1 ─ Header bar */}
         <div
-          className={`${PANEL} flex h-[58px] shrink-0 items-center justify-between gap-2 rounded-[24px] px-4`}
+          className={`${PANEL} flex h-[50px] shrink-0 items-center justify-between gap-2 rounded-[24px] px-4`}
         >
           {/* Logo / Brand badge */}
           <Link href="/" onClick={() => setIsOpen(false)} className="relative inline-block">
@@ -99,14 +99,14 @@ export default function SkiperNavbar() {
               <motion.nav
                 key="menu"
                 aria-label="Main"
-                initial={{ clipPath: "inset(0% 0% 100% 0% round 28px)" }}
-                animate={{ clipPath: "inset(0% 0% 0% 0% round 28px)" }}
+                initial={{ clipPath: "inset(0% 0% 100% 0% round 18px)" }}
+                animate={{ clipPath: "inset(0% 0% 0% 0% round 18px)" }}
                 exit={{
-                  clipPath: "inset(0% 0% 100% 0% round 28px)",
+                  clipPath: "inset(0% 0% 100% 0% round 18px)",
                   transition: { duration: 0.18, ease: EASE },
                 }}
                 transition={{ duration: 0.28, ease: EASE }}
-                className={`${PANEL} relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-[28px]`}
+                className={`${PANEL} relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-[18px]`}
               >
                 {/* Soft backdrop glow adaptively tuned for light & dark mode */}
                 <div className="absolute inset-0 bg-blue-500/10 dark:bg-blue-500/15 blur-3xl rounded-full pointer-events-none" />
