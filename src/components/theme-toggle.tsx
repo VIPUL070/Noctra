@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -10,11 +11,22 @@ export const ThemeToggleButton = ({
   className?: string;
 }) => {
   const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className={cn("rounded-full", className)} aria-hidden="true" />;
+  }
+
   const isDark = resolvedTheme === "dark";
 
   return (
     <button
       type="button"
+      aria-label="Toggle theme"
       className={cn(
         "rounded-full transition-all duration-300 active:scale-95",
         isDark ? "bg-black text-white" : "bg-white text-black",
@@ -22,7 +34,7 @@ export const ThemeToggleButton = ({
       )}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
-      <svg
+            <svg
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
         fill="currentColor"
