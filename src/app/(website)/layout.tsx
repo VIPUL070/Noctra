@@ -1,4 +1,4 @@
-import SkiperNavbar from "@/components/ui/navbar";
+import SkiperNavbar from "@/components/layout/navbar";
 import { ReactNode } from "react";
 
 function Layout({ children }: { children: ReactNode }) {
