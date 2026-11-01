@@ -110,3 +110,56 @@ export const getNotifications = async () => {
     }
   }
 }
+
+export const searchUsers = async (query: string) => {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return {
+        status: 401,
+        data: { users: undefined }
+      }
+    }
+
+    const users = await db.user.findMany({
+      where: {
+        OR: [
+          { firstName: { contains: query, mode: 'insensitive' } },
+          { lastName: { contains: query, mode: 'insensitive' } },
+          { email: { contains: query, mode: 'insensitive' } },
+        ],
+        NOT: [ {clerkId: userId}]
+      },
+
+      select: {
+        id: true,
+        subscription: {
+          select: {
+            plan :true
+          }
+        },
+        firstName: true,
+        lastName: true,
+        image: true,
+        email: true
+      }
+    })
+
+    if (!users) {
+      return {
+        status: 404,
+        data: { users: undefined }
+      }
+    }
+    return {
+      status: 200,
+      data: { users }
+    }
+  } catch (error) {
+    console.log("Fetching User Error: ", error)
+    return {
+      status: 500,
+      data: { users: undefined }
+    }
+  }
+}
