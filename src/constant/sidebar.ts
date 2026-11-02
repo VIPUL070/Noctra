@@ -20,10 +20,11 @@ export function getNav(base: string): { groups: NavGroupData[]; } {
   return {
     groups: [
       {
+        heading: 'Menu',
         items: [
           { id: 'search', title: 'Search', icon: Search, shortcut: '⌘K', action: 'search' },
-          { id: 'home', title: 'Home', icon: LayoutDashboard, href: base, exact: true },
-          { id: 'library', title: 'My Library', icon: Library, href: `${base}/my-library` },
+          { id: 'home', title: 'Home', icon: LayoutDashboard, href:`${base}/home`, exact: true },
+          { id: 'library', title: 'My Library', icon: Library, href: `${base}` },
           { id: 'notifications', title: 'Notifications', icon: Bell, href: `${base}/notiifcations`,badge: 12  },
           { id: 'billing', title: 'Billing', icon: ReceiptText , href: `${base}/billing` },
           { id: 'settings', title: 'Settings', icon: Settings, href: `${base}/settings`},

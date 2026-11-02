@@ -3,21 +3,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  ChevronDown,
-  ChevronRight,
-  Command,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Search,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getNav, isItemActive, NavAction, NavItemData } from "@/constant/sidebar";
 import { useQueryData } from "@/hooks/useQueryData";
 import { getWorkSpaces } from "@/actions/workspace";
-import Modal from "../modals/modal";
+import SearchDialog from "../modals/search-modal";
+import { getNotifications } from "@/actions/user";
 
 type SidebarContextValue = { open: boolean; toggle: () => void };
 const SidebarContext = createContext<SidebarContextValue | null>(null);
@@ -61,24 +53,21 @@ export function SidebarToggle({ className }: { className?: string }) {
   );
 }
 
-function WorkspaceSwitcher({ currentId }: { currentId: string }) {
+function WorkspaceSwitcher({
+  currentId,
+  name,
+  allWorkspaces,
+}: {
+  currentId: string;
+  name: string;
+  allWorkspaces: {
+    name: string;
+    id: string;
+    type: string;
+  }[];
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-
-  const { data: ws, isFetched, isPending } = useQueryData(["user-workspaces"], getWorkSpaces);
-
-  const owned = ws?.data.workspaces?.workSpace ?? [];
-  const joined =
-    ws?.data.workspaces?.members
-      .map((m) => m.WorkSpace)
-      .filter((w): w is NonNullable<typeof w> => w !== null) ?? [];
-
-  const allWorkspaces = [...owned, ...joined].filter(
-    (w, i, arr) => arr.findIndex((x) => x.id === w.id) === i,
-  );
-
-  const current = allWorkspaces.find((w) => w.id === currentId);
-  const name = isPending ? "Loading..." : (current?.name ?? "Workspace");
 
   return (
     <div className="relative mb-4">
@@ -132,19 +121,6 @@ function WorkspaceSwitcher({ currentId }: { currentId: string }) {
             >
               <span className="mb-0.5 text-[16px] leading-none">+</span> Create Workspace
             </button>
-
-          <Modal
-            title="Invite to Workspace"
-            description="Invite other users to your workspace."
-            trigger={
-              <button className="w-full mx-1 flex items-center cursor-pointer gap-2 rounded-md px-3 py-2 text-left text-[13px] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground">
-              <span className="mb-0.5 text-[16px] leading-none">+</span> Invite to Workspace
-                
-              </button>
-            }
-          >
-            <p className="text-sm text-muted-foreground">Invite form goes here.</p>
-          </Modal>
           </div>
         </>
       )}
@@ -157,11 +133,13 @@ function NavItem({
   pathname,
   onAction,
   level = 0,
+  notifications,
 }: {
   item: NavItemData;
   pathname: string;
   onAction: (a: NavAction) => void;
   level?: number;
+  notifications?: number;
 }) {
   const hasChildren = !!item.children?.length;
   const isActive = isItemActive(item, pathname);
@@ -195,9 +173,9 @@ function NavItem({
             {item.shortcut}
           </kbd>
         )}
-        {item.badge !== undefined && (
+        {notifications !== undefined && (
           <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-medium text-primary">
-            {item.badge}
+            {notifications}
           </span>
         )}
         {hasChildren && (
@@ -273,45 +251,6 @@ function NavItem({
   );
 }
 
-function SearchDialog({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-start justify-center bg-background/60 px-4 pt-[15vh] backdrop-blur-sm"
-    >
-      <div className="absolute inset-0" onClick={onClose} />
-      <div className="relative w-full max-w-xl overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center border-b border-border px-4">
-          <Search className="mr-3 h-4.5 w-4.5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
-          <input
-            autoFocus
-            className="flex-1 bg-transparent py-4 text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
-            placeholder="Search projects, docs, or actions..."
-          />
-          <kbd className="ml-2 hidden h-5 items-center justify-center rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
-            ESC
-          </kbd>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close search"
-            className="ml-3 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <X className="h-4.5 w-4.5" strokeWidth={1.5} />
-          </button>
-        </div>
-        <div className="flex flex-col items-center justify-center p-2 py-8">
-          <Command className="mb-2 h-6 w-6 text-muted-foreground/50" strokeWidth={1.5} />
-          <p className="text-[13px] font-medium text-muted-foreground">
-            Type a command or search...
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function UpgradeCard({ href }: { href: string }) {
   return (
     <div className="mt-auto rounded-lg border border-border bg-muted/40 p-5">
@@ -344,23 +283,44 @@ export function AppSidebar({
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
 
+  const { data: ws, isPending } = useQueryData(["user-workspaces"], getWorkSpaces);
+  const { data: notifications } = useQueryData(["user-notifications"], getNotifications);
+
+  const owned = ws?.data.workspaces?.workSpace ?? [];
+  const joined =
+    ws?.data.workspaces?.members
+      .map((m) => m.WorkSpace)
+      .filter((w): w is NonNullable<typeof w> => w !== null) ?? [];
+
+  const allWorkspaces = [...owned, ...joined].filter(
+    (w, i, arr) => arr.findIndex((x) => x.id === w.id) === i,
+  );
+
+  const current = allWorkspaces.find((w) => w.id === activeWorkspaceId);
+  const name = isPending ? "Loading..." : (current?.name ?? "Workspace");
+
+  const plan = ws?.data.workspaces?.subscription?.plan;
+  const canSearch = plan === "PRO" && current?.type === "PUBLIC";
+
+  const count = notifications?.data?.notifications?._count;
+
   const { groups } = getNav(`/dashboard/${activeWorkspaceId}`);
 
   const handleAction = (action: NavAction) => {
-    if (action === "search") setSearchOpen(true);
+    if (action === "search" && canSearch) setSearchOpen(true);
   };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setSearchOpen(true);
+        if (canSearch) setSearchOpen(true);
       }
       if (e.key === "Escape") setSearchOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [canSearch]);
 
   return (
     <aside
@@ -372,18 +332,30 @@ export function AppSidebar({
       )}
     >
       <div className="flex h-full w-65 flex-col p-3">
-        <WorkspaceSwitcher currentId={activeWorkspaceId} />
+        <WorkspaceSwitcher
+          currentId={activeWorkspaceId}
+          name={name}
+          allWorkspaces={allWorkspaces}
+        />
 
         <nav className="scrollbar-none mt-2 flex flex-1 flex-col gap-4 overflow-y-auto">
           {groups.map((group, i) => (
             <div key={i} className="flex flex-col gap-0.5">
               {group.heading && (
-                <span className="mb-1 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="mb-1 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground">
                   {group.heading}
                 </span>
               )}
               {group.items.map((item) => (
-                <NavItem key={item.id} item={item} pathname={pathname} onAction={handleAction} />
+                <NavItem
+                  key={item.id}
+                  item={item}
+                  pathname={pathname}
+                  onAction={handleAction}
+                  notifications={
+                    item.title === "Notifications" ? (count?.notification ?? 0) : undefined
+                  }
+                />
               ))}
             </div>
           ))}
@@ -392,7 +364,9 @@ export function AppSidebar({
         <UpgradeCard href="/upgrade" />
       </div>
 
-      {searchOpen && <SearchDialog onClose={() => setSearchOpen(false)} />}
+      {searchOpen && canSearch && (
+        <SearchDialog workspaceId={activeWorkspaceId} onClose={() => setSearchOpen(false)} />
+      )}
     </aside>
   );
 }
