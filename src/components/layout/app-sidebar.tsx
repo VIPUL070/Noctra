@@ -3,15 +3,24 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getNav, isItemActive, NavAction, NavItemData } from "@/constant/sidebar";
+import {
+  getNav,
+  getSharedWorkspaceNav,
+  getWorkspaceNav,
+  isItemActive,
+  NavAction,
+  NavItemData,
+} from "@/constant/sidebar";
 import { useQueryData } from "@/hooks/useQueryData";
 import { getWorkSpaces } from "@/actions/workspace";
 import SearchDialog from "../modals/search-modal";
 import { getNotifications } from "@/actions/user";
+import { Separator } from "../ui/separator";
+import GCard from "../ui/global-card";
 
-type SidebarContextValue = { open: boolean; toggle: () => void };
+type SidebarContextValue = { open: boolean; toggle: () => void; setOpen: (v: boolean) => void };
 const SidebarContext = createContext<SidebarContextValue | null>(null);
 
 export function useSidebar() {
@@ -29,7 +38,7 @@ export function SidebarProvider({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <SidebarContext.Provider value={{ open, toggle: () => setOpen((o) => !o) }}>
+    <SidebarContext.Provider value={{ open, toggle: () => setOpen((o) => !o), setOpen }}>
       {children}
     </SidebarContext.Provider>
   );
@@ -48,7 +57,7 @@ export function SidebarToggle({ className }: { className?: string }) {
         className,
       )}
     >
-      <Icon className="h-4.5 w-4.5" strokeWidth={1.5} />
+      <Icon className="h-5.5 w-5.5" strokeWidth={1.5} />
     </button>
   );
 }
@@ -251,26 +260,6 @@ function NavItem({
   );
 }
 
-function UpgradeCard({ href }: { href: string }) {
-  return (
-    <div className="mt-auto rounded-lg border border-border bg-muted/40 p-5">
-      <div className="mb-1.5 flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-primary" strokeWidth={1.5} />
-        <span className="text-[13px] font-medium text-foreground">Upgrade to Pro</span>
-      </div>
-      <p className="mb-3 text-[12px] leading-snug text-muted-foreground">
-        Unlock more features and higher limits for your workspace.
-      </p>
-      <Link
-        href={href}
-        className="flex w-full items-center justify-center rounded-md bg-primary px-2 py-1.5 text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-      >
-        Upgrade
-      </Link>
-    </div>
-  );
-}
-
 export function AppSidebar({
   activeWorkspaceId,
   className,
@@ -279,7 +268,7 @@ export function AppSidebar({
   onSignOut?: () => void;
   className?: string;
 }) {
-  const { open } = useSidebar();
+  const { open,toggle,setOpen } = useSidebar();
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -304,7 +293,14 @@ export function AppSidebar({
 
   const count = notifications?.data?.notifications?._count;
 
-  const { groups } = getNav(`/dashboard/${activeWorkspaceId}`);
+  const { groups: menuGroups } = getNav(`/dashboard/${activeWorkspaceId}`);
+  const ownedWorkspaceGroup = getWorkspaceNav(owned);
+  const sharedWorkspaceGroup = getSharedWorkspaceNav(joined);
+  const groups = [
+    ...menuGroups,
+    ...(ownedWorkspaceGroup.items.length ? [ownedWorkspaceGroup] : []),
+    ...(sharedWorkspaceGroup.items.length ? [sharedWorkspaceGroup] : []),
+  ];
 
   const handleAction = (action: NavAction) => {
     if (action === "search" && canSearch) setSearchOpen(true);
@@ -322,12 +318,18 @@ export function AppSidebar({
     return () => window.removeEventListener("keydown", onKey);
   }, [canSearch]);
 
-  return (
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 767px)").matches) setOpen(false);
+  }, [pathname,setOpen]);
+
+  const SidebarSection = (
     <aside
       inert={!open}
       className={cn(
-        "h-full shrink-0 overflow-hidden border-border bg-card transition-[width] duration-300 ease-in-out",
-        open ? "w-65 border-r" : "w-0",
+        "h-full shrink-0 overflow-hidden bg-card border-border transition-[width,transform] duration-300 ease-in-out",
+        "fixed inset-y-0 left-0 z-50 w-65 md:static md:z-auto",
+        open ? "translate-x-0 border-r" : "-translate-x-full md:translate-x-0",
+        open ? "md:w-65" : "md:w-0",
         className,
       )}
     >
@@ -340,7 +342,8 @@ export function AppSidebar({
 
         <nav className="scrollbar-none mt-2 flex flex-1 flex-col gap-4 overflow-y-auto">
           {groups.map((group, i) => (
-            <div key={i} className="flex flex-col gap-0.5">
+            <div key={group.heading ?? i} className="flex flex-col gap-0.5">
+              {i > 0 && <Separator className="mb-3 w-4/5" />}
               {group.heading && (
                 <span className="mb-1 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground">
                   {group.heading}
@@ -353,15 +356,27 @@ export function AppSidebar({
                   pathname={pathname}
                   onAction={handleAction}
                   notifications={
-                    item.title === "Notifications" ? (count?.notification ?? 0) : undefined
+                    item.id === "notifications" ? (count?.notification ?? 0) : undefined
                   }
                 />
               ))}
             </div>
           ))}
         </nav>
-
-        <UpgradeCard href="/upgrade" />
+        <Separator className="mb-3 w-4/5" />
+        {ws?.data?.workspaces?.subscription?.plan === "FREE" && (
+          <GCard
+            title="Upgrade to Pro"
+            description="Unlock more features and higher limits for your workspace."
+          >
+            <Link
+              href={`/`}
+              className="flex w-full items-center justify-center rounded-md bg-primary px-2 py-1.5 text-[13px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Upgrade
+            </Link>
+          </GCard>
+        )}
       </div>
 
       {searchOpen && canSearch && (
@@ -369,4 +384,11 @@ export function AppSidebar({
       )}
     </aside>
   );
+  return (
+    <>
+      {open && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={toggle} />}
+      {SidebarSection}
+    </>
+  );
 }
+export default AppSidebar;
