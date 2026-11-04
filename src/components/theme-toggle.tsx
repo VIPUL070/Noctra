@@ -28,7 +28,7 @@ export const ThemeToggleButton = ({
       type="button"
       aria-label="Toggle theme"
       className={cn(
-        "rounded-full transition-all duration-300 active:scale-95",
+        "rounded-full transition-all cursor-pointer duration-300 active:scale-95",
         isDark ? "bg-black text-white" : "bg-white text-black",
         className,
       )}

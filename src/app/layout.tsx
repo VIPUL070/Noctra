@@ -39,7 +39,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Show when="signed-out" />
             <Show when="signed-in" />
           </Suspense>
-          <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
             <Providers>{children}</Providers>
           </ThemeProvider>
         </body>
