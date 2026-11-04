@@ -1,33 +1,24 @@
 "use server"
 
 import { db } from "@/lib/db";
-import { auth, currentUser } from "@clerk/nextjs/server"
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { cache } from "react";
 
-export const onAuthenticateUser = async () => {
+export const onAuthenticateUser = cache(async () => {
   try {
-    const user = await currentUser();
-    if (!user) {
-      return { status: 401 }
-    }
+    const { userId } = await auth();
+    if (!userId) return { status: 401 }
 
     const userExists = await db.user.findUnique({
-      where: {
-        clerkId: user.id
-      },
-      include: {
-        workSpace: {
-          where: {
-            User: {
-              clerkId: user.id
-            }
-          }
-        }
-      }
+      where: { clerkId: userId },
+      include: { workSpace: true },
     })
 
-    if (userExists) {
-      return { status: 200, user: userExists }
-    }
+    if (userExists) return { status: 200, user: userExists }
+
+    const user = await currentUser();
+
+    if (!user) return { status: 401 }
 
     const newUser = await db.user.create({
       data: {
@@ -36,44 +27,24 @@ export const onAuthenticateUser = async () => {
         lastName: user.lastName,
         email: user.emailAddresses[0]!.emailAddress,
         image: user.imageUrl,
-        studio: {
-          create: {},
-        },
-        subscription: {
-          create: {},
-        },
+        studio: { create: {} },
+        subscription: { create: {} },
         workSpace: {
-          create: {
-            name: `${user.firstName}'s Workspace`,
-            type: 'PERSONAL'
-          }
-        }
+          create: { name: `${user.firstName}'s Workspace`, type: 'PERSONAL' },
+        },
       },
       include: {
-        workSpace: {
-          where: {
-            User: {
-              clerkId: user.id
-            }
-          }
-        },
-        subscription: {
-          select: {
-            plan: true
-          }
-        }
-      }
+        workSpace: true,
+        subscription: { select: { plan: true } },
+      },
     })
 
-    if (newUser) {
-      return { status: 201, user: newUser }
-    }
-    return { status: 404 }
+    return { status: 201, user: newUser }
   } catch (error) {
     console.log(error)
     return { status: 500 }
   }
-}
+})
 
 export const getNotifications = async () => {
   try {
@@ -128,14 +99,14 @@ export const searchUsers = async (query: string) => {
           { lastName: { contains: query, mode: 'insensitive' } },
           { email: { contains: query, mode: 'insensitive' } },
         ],
-        NOT: [ {clerkId: userId}]
+        NOT: [{ clerkId: userId }]
       },
 
       select: {
         id: true,
         subscription: {
           select: {
-            plan :true
+            plan: true
           }
         },
         firstName: true,
