@@ -5,8 +5,8 @@ import {
   getWorkSpaces,
   verifyAccessToWorkspace,
 } from "@/actions/workspace";
-import { AppSidebar, SidebarProvider, SidebarToggle } from "@/components/layout/app-sidebar";
-import { ThemeToggleButton } from "@/components/theme-toggle";
+import { AppSidebar, SidebarProvider} from "@/components/layout/app-sidebar";
+import InfoBar from "@/components/layout/info-bar";
 import { getQueryClient } from "@/lib/query-client";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
@@ -58,10 +58,7 @@ async function Layout({ params, children }: WorkSpaceLayoutProps) {
         <div className="flex h-screen bg-background">
           <AppSidebar activeWorkspaceId = {workspaceId} />
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="flex h-14 shrink-0 items-center border-b border-border px-4">
-              <SidebarToggle />
-              <ThemeToggleButton className="size-4.5 rounded-full"/>
-            </header>
+            <InfoBar />
             <main className="flex-1 overflow-y-auto p-6">{children}</main>
           </div>
         </div>
