@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 
 const InfoBar = () => {
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 bg-background/80 px-3 backdrop-blur sm:gap-3 sm:px-4">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 bg-background/80 px-3 p-3 backdrop-blur sm:gap-3 sm:px-4">
         
       <SidebarToggle className="shrink-0" />
 
