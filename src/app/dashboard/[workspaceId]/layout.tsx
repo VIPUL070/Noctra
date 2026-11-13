@@ -5,6 +5,7 @@ import {
   getWorkSpaces,
   verifyAccessToWorkspace,
 } from "@/actions/workspace";
+import WorkSpaceHeader from "@/components/dashboard/workspace-header";
 import { AppSidebar, SidebarProvider} from "@/components/layout/app-sidebar";
 import InfoBar from "@/components/layout/info-bar";
 import { getQueryClient } from "@/lib/query-client";
@@ -59,7 +60,10 @@ async function Layout({ params, children }: WorkSpaceLayoutProps) {
           <AppSidebar activeWorkspaceId = {workspaceId} />
           <div className="flex min-w-0 flex-1 flex-col">
             <InfoBar />
-            <main className="flex-1 overflow-y-auto p-6">{children}</main>
+            <main className="flex-1 overflow-y-auto overflow-x-hidden pt-10 p-6">
+              <WorkSpaceHeader workspace={hasAccess.data.workspace} />
+              <div className="mt-4">{children}</div>
+            </main>
           </div>
         </div>
       </SidebarProvider>
