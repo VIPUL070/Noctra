@@ -206,3 +206,57 @@ export const getWorkSpaces = async () => {
         }
     }
 }
+
+export const createWorkspace = async (name: string) => {
+    try {
+
+        const { userId } = await auth();
+        if(!userId){
+            return {status:401}
+        }
+
+        const authorized = await db.user.findUnique({
+            where:{
+                clerkId: userId
+            },
+            select: {
+                subscription:{
+                    select:{
+                        plan:true
+                    }
+                }
+            }
+        })
+
+        if(authorized?.subscription?.plan === "PRO"){
+           const workspace = await db.user.update({
+            where:{
+                clerkId:userId
+            },
+            data: {
+                workSpace:{
+                    create:{
+                        name,
+                        type: "PUBLIC"
+                    }
+                }
+            }
+           })
+
+           if(workspace){
+            return {status:201 ,data: 'Workspace Created'}
+           }
+        }
+
+        return {
+            status: 401,
+            data: 'You are not authorized to create a space.'
+        }
+
+    } catch (error) {
+        console.log("Creating User Workspaces Error: ", error)
+        return {
+            status: 500,
+        }
+    }
+}
