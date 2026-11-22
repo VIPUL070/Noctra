@@ -12,9 +12,9 @@ const CreateWorkspace = () => {
 
    const {data:plan} = useQueryData(['user-workspaces'], getWorkSpaces)
 
-   // if(plan?.data.workspaces?.subscription?.plan === "FREE"){
-   //    return <></>
-   // }
+   if(plan?.data.workspaces?.subscription?.plan === "FREE"){
+      return <></>
+   }
 
    if(plan?.data.workspaces?.subscription?.plan){
       return(

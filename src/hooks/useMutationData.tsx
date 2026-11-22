@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/toast'
 import {
   useMutation,
   useQueryClient,
@@ -11,16 +12,19 @@ export const useMutationData = <TData, TVariables = void>(
   mutationKey: MutationKey,
   mutationFn: (variables: TVariables) => Promise<TData>,
   queryKeyToInvalidate?: QueryKey,
-  onSuccess?: () => void,
+  onSuccess?: (data: TData, variables: TVariables) => void,
 ) => {
   const queryClient = useQueryClient()
 
   const { mutate, mutateAsync, isPending } = useMutation({
     mutationKey,
     mutationFn,
-    onSuccess: (data) => {
-      onSuccess?.();
-      //return toast with data
+    onSuccess: (data, variables) => {
+      toast.success('Success')
+      onSuccess?.(data, variables)
+    },
+    onError: (err) => {
+      toast.error(err.message ?? 'Something went wrong')
     },
     onSettled: async () => {
       if (queryKeyToInvalidate) {
