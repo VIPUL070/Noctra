@@ -260,3 +260,31 @@ export const createWorkspace = async (name: string) => {
         }
     }
 }
+
+export const renameFolder = async(folderId: string | undefined, name:string) => {
+    try {
+       if(!folderId) return;
+       const {userId} = await auth();
+       if(!userId){
+        return {status: 401, data: "Unauthorized, Please login first."}
+       } 
+
+       const folder = await db.folder.update({
+         where: {
+            id: folderId
+         },
+         data: {
+            name,
+         }
+       })
+
+       if(folder){
+        return {status:200, data: 'Folder Renamed'}
+       }
+       return {status:400, data: `Folder doesn't exist`}
+
+    } catch (error) {
+      console.log('Folder Rename Error', error)
+      return {status:500 , data: "Internal Server Error"}
+    }
+}

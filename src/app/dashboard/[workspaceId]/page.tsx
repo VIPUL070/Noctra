@@ -1,5 +1,7 @@
+import CreateFolders from "@/components/dashboard/create-folders";
 import CreateWorkspace from "@/components/dashboard/create-workspace";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Folders from "@/components/folder/folders";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export interface Props {
   params: Promise<{ workspaceId: string }>;
@@ -25,11 +27,18 @@ const Page = async ({ params }: Props) => {
               Archive
             </TabsTrigger>
           </TabsList>
+
+          <div className="flex gap-x-3">
+            <CreateWorkspace />
+            <CreateFolders workspaceId={workspaceId} />
+          </div>
         </div>
 
-        <div className="flex gap-x-3">
-            <CreateWorkspace />
-        </div>
+        <section className="py-9">
+          <TabsContent value="videos">
+            <Folders workspaceId={workspaceId} />
+          </TabsContent>
+        </section>
       </Tabs>
     </div>
   );
