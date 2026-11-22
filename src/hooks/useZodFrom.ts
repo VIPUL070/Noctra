@@ -1,7 +1,7 @@
 import { UseMutateFunction } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ZodType } from "zod";
-import { FieldValues, useForm } from "react-hook-form";
+import { z, ZodType } from "zod";
+import {  useForm } from "react-hook-form";
 
 const useZodForm = (
     schema: ZodType<any, any, any>,
@@ -14,7 +14,7 @@ const useZodForm = (
         reset,
         handleSubmit,
         formState: { errors },
-    } = useForm<FieldValues>({
+    } = useForm<z.infer<typeof schema>>({
         resolver: zodResolver(schema),
         defaultValues,
     });
