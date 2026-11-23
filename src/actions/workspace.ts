@@ -263,7 +263,9 @@ export const createWorkspace = async (name: string) => {
 
 export const renameFolder = async(folderId: string | undefined, name:string) => {
     try {
-       if(!folderId) return;
+       if (!folderId) {
+        return { status: 400, data: "Folder ID is required." };
+       }
        const {userId} = await auth();
        if(!userId){
         return {status: 401, data: "Unauthorized, Please login first."}
@@ -288,3 +290,36 @@ export const renameFolder = async(folderId: string | undefined, name:string) => 
       return {status:500 , data: "Internal Server Error"}
     }
 }
+
+export const createFolder = async (workspaceId: string) => {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { status: 401, data: "Unauthorized, Please login first." };
+    }
+
+    if (!workspaceId) {
+      return { status: 400, data: "Workspace ID is required." };
+    }
+
+    const newFolder = await db.workSpace.update({
+        where: {
+            id: workspaceId
+        },
+        data: {
+            folders: {
+                create: { name: 'Untitled' }
+            }
+        }
+    })
+
+    if(!newFolder){
+      return {status: 400, data:"Unable to create folder"}
+    }
+    return {status: 201, data: "New Folder Created."}
+
+  } catch (error) {
+    console.error("Creating a folder error:", error);
+    return { status: 500, data: "Internal Server Error" };
+  }
+};
