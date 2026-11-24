@@ -323,3 +323,37 @@ export const createFolder = async (workspaceId: string) => {
     return { status: 500, data: "Internal Server Error" };
   }
 };
+
+export const getFolderInfo = async (folderId: string) => {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return { status: 401, data: "Unauthorized, Please login first." };
+    }
+
+    if (!folderId) {
+      return { status: 400, data: "Folder ID is required." };
+    }
+
+    const folder = await db.folder.findUnique({
+        where: {
+            id: folderId
+        },
+        select: {
+            name: true,
+            _count: {
+                select: { videos: true }
+            }
+        }
+    })
+
+    if(!folder){
+      return {status: 400, data: null}
+    }
+    return {status: 200, data: folder}
+
+  } catch (error) {
+    console.error("Getting Folder Info Error: ", error);
+    return { status: 500, data: "Internal Server Error" };
+  }
+};
