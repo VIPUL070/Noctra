@@ -1,11 +1,11 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
-import { FolderOpen } from "lucide-react";
 import React, { useRef, useState } from "react";
-import { useMutationData } from "@/hooks/useMutationData";
+import { useMutationData, useMutationDataState } from "@/hooks/useMutationData";
 import { renameFolder } from "@/actions/workspace";
 import { Input } from "../ui/input";
+import { FolderDuotoneIcon } from "../ui/folder-duotone";
 
 interface FolderProps {
   name: string;
@@ -30,18 +30,14 @@ const Folder = ({ name, id, optimistic, count }: FolderProps) => {
     () => setRename(false),
   );
 
-  const updateFolderName = (e: React.FocusEvent<HTMLInputElement>) => {
+  const {latestVar} = useMutationDataState<{name:string , id:string}>(['rename-folder'])
+
+  const updateFolderName = () => {
     if (isPending) return;
-    if (!inputRef.current || !folderCardRef.current) return;
-
-    const target = e.target as Node | null;
-    const clickedOutside =
-      !inputRef.current.contains(target) && !folderCardRef.current.contains(target);
-
-    if (!clickedOutside) return;
+    if (!inputRef.current) return;
 
     const newName = inputRef.current.value.trim();
-    if (newName && newName !== name) {
+    if (newName) {
       update({ name: newName });
     } else {
       setRename(false);
@@ -59,9 +55,14 @@ const Folder = ({ name, id, optimistic, count }: FolderProps) => {
 
   return (
 <div
-  className={cn(
-    "flex hover:bg-neutral-800 shadow-lg cursor-pointer transition duration-150 items-center gap-2 justify-between min-w-62.5 py-4 px-4 rounded-sm",
+  className={cn("group relative flex min-w-62.5 cursor-pointer items-center justify-between gap-2 rounded-xl px-4 py-6",
+        "border border-white/8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]",
+        "transition-all duration-200 ease-out",
+        "hover:border-white/15 hover:from-neutral-800/80 hover:to-neutral-900",
+        "hover:shadow-[0_8px_30px_rgba(255,255,255,0.04),inset_0_1px_0_0_rgba(255,255,255,0.1)]",
+        optimistic && "pointer-events-none opacity-60",
   )}
+  
   onClick={handleFolderClick}
 >
   <div className="flex min-w-0 flex-1 flex-col gap-px">
@@ -71,12 +72,13 @@ const Folder = ({ name, id, optimistic, count }: FolderProps) => {
         defaultValue={name}
         ref={inputRef}
         onClick={(e) => e.stopPropagation()} 
+        placeholder={name}
         onKeyDown={(e) => {
           if (e.key === "Enter") e.currentTarget.blur();
           if (e.key === "Escape") setRename(false);
         }}
         onBlur={updateFolderName}
-        className="h-6 rounded-none border-0 border-b border-neutral-500 bg-transparent p-0 text-base leading-6 shadow-none focus-visible:border-neutral-300 focus-visible:ring-0 md:text-base dark:bg-transparent"
+        className="h-4 rounded-none border-0 border-b border-neutral-500 bg-transparent p-0 text-xs shadow-none focus-visible:border-neutral-300 focus-visible:ring-0 md:text-sm dark:bg-transparent"
       />
     ) : (
       <p
@@ -84,13 +86,14 @@ const Folder = ({ name, id, optimistic, count }: FolderProps) => {
         onDoubleClick={handleEditName}
         className="h-6 truncate text-base leading-6 text-neutral-300 underline cursor-text"
       >
-        {name}
+        {latestVar && latestVar.status === 'pending' &&
+        latestVar?.variables?.id === id ? latestVar?.variables?.name : name} 
       </p>
     )}
 
     <span className="text-sm text-neutral-500">{count || 0} videos</span>
   </div>
-  <FolderOpen className="size-4 shrink-0" />
+  <FolderDuotoneIcon className="shrink-0" />
 </div>
   );
 };
