@@ -16,7 +16,7 @@ const WorkSpaceHeader = ({workspace}: HeaderProps) => {
         </span>
         <h1 className="text-4xl font-semibold">
             {
-                pathName && !pathName.includes('folders')
+                pathName && !pathName.includes('folder')
                 ? pathName.charAt(0).toUpperCase() + pathName.slice(1).toLowerCase()
                 : "My Library"
             }
