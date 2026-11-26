@@ -211,41 +211,41 @@ export const createWorkspace = async (name: string) => {
     try {
 
         const { userId } = await auth();
-        if(!userId){
-            return {status:401}
+        if (!userId) {
+            return { status: 401 }
         }
 
         const authorized = await db.user.findUnique({
-            where:{
+            where: {
                 clerkId: userId
             },
             select: {
-                subscription:{
-                    select:{
-                        plan:true
+                subscription: {
+                    select: {
+                        plan: true
                     }
                 }
             }
         })
 
-        if(authorized?.subscription?.plan === "PRO"){
-           const workspace = await db.user.update({
-            where:{
-                clerkId:userId
-            },
-            data: {
-                workSpace:{
-                    create:{
-                        name,
-                        type: "PUBLIC"
+        if (authorized?.subscription?.plan === "PRO") {
+            const workspace = await db.user.update({
+                where: {
+                    clerkId: userId
+                },
+                data: {
+                    workSpace: {
+                        create: {
+                            name,
+                            type: "PUBLIC"
+                        }
                     }
                 }
-            }
-           })
+            })
 
-           if(workspace){
-            return {status:201 ,data: 'Workspace Created'}
-           }
+            if (workspace) {
+                return { status: 201, data: 'Workspace Created' }
+            }
         }
 
         return {
@@ -261,99 +261,131 @@ export const createWorkspace = async (name: string) => {
     }
 }
 
-export const renameFolder = async(folderId: string | undefined, name:string) => {
+export const renameFolder = async (folderId: string | undefined, name: string) => {
     try {
-       if (!folderId) {
-        return { status: 400, data: "Folder ID is required." };
-       }
-       const {userId} = await auth();
-       if(!userId){
-        return {status: 401, data: "Unauthorized, Please login first."}
-       } 
+        if (!folderId) {
+            return { status: 400, data: "Folder ID is required." };
+        }
+        const { userId } = await auth();
+        if (!userId) {
+            return { status: 401, data: "Unauthorized, Please login first." }
+        }
 
-       const folder = await db.folder.update({
-         where: {
-            id: folderId
-         },
-         data: {
-            name,
-         }
-       })
+        const folder = await db.folder.update({
+            where: {
+                id: folderId
+            },
+            data: {
+                name,
+            }
+        })
 
-       if(folder){
-        return {status:200, data: 'Folder Renamed'}
-       }
-       return {status:400, data: `Folder doesn't exist`}
+        if (folder) {
+            return { status: 200, data: 'Folder Renamed' }
+        }
+        return { status: 400, data: `Folder doesn't exist` }
 
     } catch (error) {
-      console.log('Folder Rename Error', error)
-      return {status:500 , data: "Internal Server Error"}
+        console.log('Folder Rename Error', error)
+        return { status: 500, data: "Internal Server Error" }
     }
 }
 
 export const createFolder = async (workspaceId: string) => {
-  try {
-    const { userId } = await auth();
-    if (!userId) {
-      return { status: 401, data: "Unauthorized, Please login first." };
-    }
-
-    if (!workspaceId) {
-      return { status: 400, data: "Workspace ID is required." };
-    }
-
-    const newFolder = await db.workSpace.update({
-        where: {
-            id: workspaceId
-        },
-        data: {
-            folders: {
-                create: { name: 'Untitled' }
-            }
+    try {
+        const { userId } = await auth();
+        if (!userId) {
+            return { status: 401, data: "Unauthorized, Please login first." };
         }
-    })
 
-    if(!newFolder){
-      return {status: 400, data:"Unable to create folder"}
+        if (!workspaceId) {
+            return { status: 400, data: "Workspace ID is required." };
+        }
+
+        const newFolder = await db.workSpace.update({
+            where: {
+                id: workspaceId
+            },
+            data: {
+                folders: {
+                    create: { name: 'Untitled' }
+                }
+            }
+        })
+
+        if (!newFolder) {
+            return { status: 400, data: "Unable to create folder" }
+        }
+        return { status: 201, data: "New Folder Created." }
+
+    } catch (error) {
+        console.error("Creating a folder error:", error);
+        return { status: 500, data: "Internal Server Error" };
     }
-    return {status: 201, data: "New Folder Created."}
-
-  } catch (error) {
-    console.error("Creating a folder error:", error);
-    return { status: 500, data: "Internal Server Error" };
-  }
 };
 
 export const getFolderInfo = async (folderId: string) => {
-  try {
-    const { userId } = await auth();
-    if (!userId) {
-      return { status: 401, data: "Unauthorized, Please login first." };
-    }
-
-    if (!folderId) {
-      return { status: 400, data: "Folder ID is required." };
-    }
-
-    const folder = await db.folder.findUnique({
-        where: {
-            id: folderId
-        },
-        select: {
-            name: true,
-            _count: {
-                select: { videos: true }
-            }
+    try {
+        const { userId } = await auth();
+        if (!userId) {
+            return { status: 401, data: "Unauthorized, Please login first." };
         }
-    })
 
-    if(!folder){
-      return {status: 400, data: null}
+        if (!folderId) {
+            return { status: 400, data: "Folder ID is required." };
+        }
+
+        const folder = await db.folder.findUnique({
+            where: {
+                id: folderId
+            },
+            select: {
+                name: true,
+                _count: {
+                    select: { videos: true }
+                }
+            }
+        })
+
+        if (!folder) {
+            return { status: 400, data: null }
+        }
+        return { status: 200, data: folder }
+
+    } catch (error) {
+        console.error("Getting Folder Info Error: ", error);
+        return { status: 500, data: "Internal Server Error" };
     }
-    return {status: 200, data: folder}
+};
 
-  } catch (error) {
-    console.error("Getting Folder Info Error: ", error);
-    return { status: 500, data: "Internal Server Error" };
-  }
+export const moveVideoLocation = async (folderId: string, videoId: string, workspaceId: string) => {
+    try {
+        const { userId } = await auth();
+        if (!userId) {
+            return { status: 401, data: "Unauthorized, Please login first." };
+        }
+
+        if (!folderId || !videoId || !workspaceId) {
+            return { status: 400, data: "All mentioned id are required." };
+        }
+
+        const video = await db.video.update({
+            where: {
+                id: videoId
+            },
+            data: {
+                folderId: folderId || null,
+                workspaceId: workspaceId
+            }
+        })
+
+        if(!video){
+          return {status: 404 , data: "folder/workspace/video not found."}
+        }
+        return {status: 200, data:"Folder changed successfully."}
+
+    } catch (error) {
+        console.error("Moving Video To Folder Error: ", error);
+        return { status: 500, data: "Internal Server Error" };
+    }
 };

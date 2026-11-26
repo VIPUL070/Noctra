@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import FolderReducer from './features/folders/folderSlice'
-import WorkspaceReducer from './features/folders/folderSlice'
+import WorkspaceReducer from './features/workspaces/workspaceSlice'
+
 export const makeStore = () => {
   return configureStore({
     reducer: {
